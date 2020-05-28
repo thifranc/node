@@ -1,7 +1,8 @@
 from .nomad import nomad
 from .configuration import config
 from .consul import consul
-from .jobs import get_job, hoover, wait_for_stopped_jobs
+from .jobs import get_job, hoover, nextcloud, wait_for_stopped_jobs
+from .nomad import nomad
 from .process import run, run_fg
 from .util import first, retry
 from .docker import docker
@@ -303,9 +304,9 @@ def deploy(secrets, checks):
         'liquid/hoover/snoop.django',
         'liquid/hoover/snoop.postgres',
         'liquid/authdemo/auth.django',
+        'liquid/nextcloud/nextcloud.postgres',
         'liquid/nextcloud/nextcloud.admin',
         'liquid/nextcloud/nextcloud.uploads',
-        'liquid/nextcloud/nextcloud.maria',
         'liquid/dokuwiki/auth.django',
         'liquid/nextcloud/auth.django',
         'liquid/rocketchat/auth.django',
@@ -338,9 +339,12 @@ def deploy(secrets, checks):
             nomad.stop(job)
         wait_for_stopped_jobs(jobs_to_stop)
 
-    # only start deps jobs + hoover
+    # only start deps jobs + hoover + nextcloud databse if nc is enabled
     hov_deps = hoover.Deps()
     deps_jobs = [(hov_deps.name, get_job(hov_deps.template))]
+    if config.is_app_enabled('nextcloud'):
+        nc_db_job = nextcloud.Database()
+        deps_jobs.append((nc_db_job.name, get_job(nc_db_job.template)))
 
     health_checks = {}
     for job, hcl in deps_jobs:

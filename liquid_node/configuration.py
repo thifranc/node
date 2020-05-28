@@ -51,6 +51,7 @@ class Configuration:
         self.default_app_status = self.ini.get('apps', 'default_app_status', fallback='on')
 
         self.all_jobs = [
+            nextcloud.Database(),
             liquid.Liquid(),
             liquid.Ingress(),
             hoover.Hoover(),
@@ -60,7 +61,6 @@ class Configuration:
             rocketchat.Rocketchat(),
             rocketchat.Migrate(),
             nextcloud.Nextcloud(),
-            nextcloud.Migrate(),
             nextcloud.Periodic(),
             hypothesis.Hypothesis(),
             hypothesis.UserSync(),
