@@ -306,7 +306,6 @@ def deploy(secrets, checks):
         'liquid/authdemo/auth.django',
         'liquid/nextcloud/nextcloud.postgres',
         'liquid/nextcloud/nextcloud.admin',
-        'liquid/nextcloud/nextcloud.uploads',
         'liquid/dokuwiki/auth.django',
         'liquid/nextcloud/auth.django',
         'liquid/rocketchat/auth.django',

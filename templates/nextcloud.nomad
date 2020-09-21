@@ -25,10 +25,10 @@ job "nextcloud" {
         force_pull = true
         image = "${config.image('liquid-nextcloud')}"
         volumes = [
-          "{% raw %}${meta.liquid_volumes}{% endraw %}/nextcloud/nextcloud18:/var/www/html",
-          "{% raw %}${meta.liquid_collections}{% endraw %}/uploads/data:/data:rshared",
+          "{% raw %}${meta.liquid_volumes}{% endraw %}/nextcloud/nextcloud19:/var/www/html",
+          "{% raw %}${meta.liquid_volumes}{% endraw %}/nextcloud/data:/data",
         ]
-        args = ["/bin/bash", "-c", "set -ex; chown www-data: /var/www/html{,/data} && ( /entrypoint.sh apache2-foreground & sudo -Eu www-data /local/setup.sh )"]
+        args = ["/bin/bash", "-c", "set -ex; chown www-data: /var/www/html /data && ( /entrypoint.sh apache2-foreground & sudo -Eu www-data /local/setup.sh )"]
         port_map {
           http = 80
         }
@@ -50,6 +50,7 @@ job "nextcloud" {
         LIQUID_TITLE = "${config.liquid_title}"
         LIQUID_CORE_URL = "${config.liquid_core_url}"
         NEXTCLOUD_UPDATE = "1"
+        NEXTCLOUD_DATA_DIR = "/data"
       }
       template {
         data = <<-EOF
@@ -66,10 +67,6 @@ job "nextcloud" {
 
         {{- with secret "liquid/nextcloud/nextcloud.postgres" }}
           POSTGRES_PASSWORD = {{.Data.secret_key | toJSON }}
-        {{- end }}
-
-        {{- with secret "liquid/nextcloud/nextcloud.uploads" }}
-          UPLOADS_USER_PASSWORD = {{.Data.secret_key | toJSON }}
         {{- end }}
 
         {{- range service "nextcloud-pg" }}
