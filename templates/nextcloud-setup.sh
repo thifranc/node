@@ -41,6 +41,7 @@ set -e
 if [[ "$INSTALLED" =~ "false" || "$INSTALLED" =~ "error" ]]; then
     echo "Installing nextcloud"
 
+    sudo chown -R www-data:www-data /data
     php occ maintenance:install \
             --no-interaction \
             --verbose \
@@ -57,7 +58,7 @@ if [[ "$INSTALLED" =~ "false" || "$INSTALLED" =~ "error" ]]; then
 fi
 
 echo "Configuring..."
-php occ maintenance:mode --on
+php occ maintenance:mode --off || true
 
 php occ config:system:set trusted_domains 0 --value '*'
 php occ config:system:set dbhost --value $POSTGRES_HOST
@@ -70,15 +71,14 @@ php occ config:system:set skeletondirectory --value ''
 php occ config:system:set updatechecker --value false --type boolean
 php occ config:system:set has_internet_connection --value true --type boolean
 php occ config:system:set appstoreenabled --value true --type boolean
-php occ config:system:set social_login_auto_redirect --value true --type boolean
 
-echo "Unpacking theme"
-rm -rf themes/liquid || true
-cp -r /liquid/theme themes/liquid
-chown -R www-data:www-data themes/liquid
-chmod g+s themes/liquid
-
-php occ config:system:set theme --value liquid
+#echo "Unpacking theme"
+#rm -rf themes/liquid || true
+#cp -r /liquid/theme themes/liquid
+#sudo chown -R www-data:www-data themes/liquid
+#chmod g+s themes/liquid
+#
+#php occ config:system:set theme --value liquid
 
 # install contacts before shutting down the app store
 php occ app:install contacts || true
@@ -86,6 +86,8 @@ php occ app:install calendar || true
 php occ app:install deck     || true
 php occ app:install polls    || true
 php occ app:install sociallogin || true
+php occ app:install groupfolders || true
+php occ app:install group_everyone || true
 
 php occ app:disable accessibility
 php occ app:disable activity
@@ -112,12 +114,16 @@ php occ app:enable contacts
 php occ app:enable deck
 php occ app:enable polls
 php occ app:enable sociallogin
+php occ app:enable groupfolders
+php occ app:enable group_everyone
 
 php occ config:system:set has_internet_connection --value false --type boolean
 php occ config:system:set appstoreenabled --value false --type boolean
 
+php occ config:system:set social_login_auto_redirect --value false --type boolean
+
 echo "Configuration done"
-php occ maintenance:mode --off
+php occ maintenance:mode --off || true
 
 # scan the filesystem in case there are files initially (redeploy e.g.)
 php occ files:scan --all

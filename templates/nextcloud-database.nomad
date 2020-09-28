@@ -6,6 +6,17 @@ job "nextcloud-database" {
   priority = 100
 
   group "nextcloud-database" {
+    network {
+      mode = "bridge"
+    }
+
+    service {
+      name = "nextcloud-pg"
+      port = "5432"
+
+      connect { sidecar_service {} }
+    }
+
     task "nextcloud-database" {
       constraint {
         attribute = "{% raw %}${meta.liquid_volumes}{% endraw %}"
@@ -22,12 +33,13 @@ job "nextcloud-database" {
         labels {
           liquid_task = "nextcloud-pg"
         }
-        port_map {
-          pg = 5432
-        }
+        #port_map {
+        #  pg = 5432
+        #}
         # 128MB, the default postgresql shared_memory config
         shm_size = 134217728
       }
+
       template {
         data = <<-EOF
         POSTGRES_DB = "nextcloud"
@@ -40,26 +52,13 @@ job "nextcloud-database" {
         destination = "local/db.env"
         env = true
       }
+
       resources {
         cpu = 100
         memory = 500
         network {
           mbits = 1
-          # save port as static because there's no simple way to update it
-          port "pg" {
-            static = 8666
-          }
-        }
-      }
-      service {
-        name = "nextcloud-pg"
-        port = "pg"
-        check {
-          name = "tcp"
-          initial_status = "critical"
-          type = "tcp"
-          interval = "${check_interval}"
-          timeout = "${check_timeout}"
+          #port pg {}
         }
       }
     }

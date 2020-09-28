@@ -7,6 +7,7 @@ job "nextcloud" {
 
   group "nextcloud" {
     ${ group_disk() }
+
     task "nextcloud" {
       ${ task_logs() }
 
@@ -37,6 +38,7 @@ job "nextcloud" {
         }
         memory_hard_limit = ${3 * config.nextcloud_memory_limit}
       }
+
       resources {
         cpu = 100
         memory = ${config.nextcloud_memory_limit}
@@ -45,6 +47,7 @@ job "nextcloud" {
           port "http" {}
         }
       }
+
       env {
         NEXTCLOUD_URL = "${config.liquid_http_protocol}://nextcloud.${config.liquid_domain}"
         LIQUID_TITLE = "${config.liquid_title}"
@@ -52,6 +55,7 @@ job "nextcloud" {
         NEXTCLOUD_UPDATE = "1"
         NEXTCLOUD_DATA_DIR = "/data"
       }
+
       template {
         data = <<-EOF
         HTTP_PROTO = "${config.liquid_http_protocol}"
@@ -69,15 +73,19 @@ job "nextcloud" {
           POSTGRES_PASSWORD = {{.Data.secret_key | toJSON }}
         {{- end }}
 
-        {{- range service "nextcloud-pg" }}
-          POSTGRES_HOST = "{{.Address}}:{{.Port}}"
-        {{- end }}
+        #{{- range service "nextcloud-pg" }}
+        #  POSTGRES_HOST = "{{.Address}}:{{.Port}}"
+        #{{- end }}
+
+        POSTGRES_HOST = "{% raw %}${NOMAD_UPSTREAM_ADDR_nextcloud_pg}{% endraw %}"
+        LIQUID_CORE_ADDR = "{% raw %}${NOMAD_UPSTREAM_ADDR_core}{% endraw %}"
 
         TIMESTAMP = "${config.timestamp}"
         EOF
         destination = "local/nextcloud-pg.env"
         env = true
       }
+
       template {
         data = <<EOF
 {% include 'nextcloud-setup.sh' %}
@@ -85,9 +93,27 @@ job "nextcloud" {
         destination = "local/setup.sh"
         perms = "755"
       }
+
       service {
         name = "nextcloud-app"
         port = "http"
+
+        connect {
+          sidecar_service {
+            proxy {
+              upstreams {
+                destination_name = "core"
+                local_bind_port  = 12345
+              }
+
+              upstreams {
+                destination_name = "nextcloud-pg"
+                local_bind_port  = 5432
+              }
+            }
+          }
+        }
+
         check {
           name = "http"
           initial_status = "critical"

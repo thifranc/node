@@ -297,6 +297,8 @@ class Configuration:
         raise RuntimeError("A job needs `template` or `loader`")
 
     def app_url(self, name):
+        if name == 'core':
+            return f'{self.liquid_http_protocol}://{self.liquid_domain}'
         return f'{self.liquid_http_protocol}://{name}.{self.liquid_domain}'
 
     def is_app_enabled(self, app_name):

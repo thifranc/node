@@ -88,6 +88,9 @@ job "liquid" {
           "traefik.enable=true",
           "traefik.frontend.rule=Host:${liquid_domain}",
         ]
+
+        connect { sidecar_service {} }
+
         check {
           name = "http"
           initial_status = "critical"
