@@ -29,6 +29,7 @@ logs {
 {%- macro group_disk(size=20) %}
 ephemeral_disk {
   size = ${size}
+  sticky = true
 }
 {%- endmacro %}
 

@@ -10,7 +10,7 @@ class Hoover(jobs.Job):
 class Workers(jobs.Job):
     name = 'hoover-workers'
     template = jobs.TEMPLATES / f'{name}.nomad'
-    app = 'hoover'
+    app = 'hoover-workers'
 
 
 class Deps(jobs.Job):

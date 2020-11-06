@@ -13,6 +13,7 @@ import os
 import logging
 import json
 import base64
+import multiprocessing
 
 log = logging.getLogger(__name__)
 
@@ -20,6 +21,30 @@ SNOOP_PG_ALLOC = "hoover-deps:snoop-pg"
 SNOOP_ES_ALLOC = "hoover-deps:es"
 HYPOTHESIS_ES_ALLOC = "hypothesis:es"
 SNOOP_API_ALLOC = "hoover:snoop"
+
+VAULT_SECRET_KEYS = [
+    'liquid/liquid/core.django',
+    'liquid/hoover/auth.django',
+    'liquid/hoover/search.django',
+    'liquid/hoover/search.postgres',
+    'liquid/hoover/snoop.django',
+    'liquid/hoover/snoop.postgres',
+    'liquid/authdemo/auth.django',
+    'liquid/nextcloud/nextcloud.admin',
+    'liquid/nextcloud/nextcloud.uploads',
+    'liquid/nextcloud/nextcloud.maria',
+    'liquid/dokuwiki/auth.django',
+    'liquid/nextcloud/auth.django',
+    'liquid/rocketchat/auth.django',
+    'liquid/hypothesis/auth.django',
+    'liquid/hypothesis/hypothesis.secret_key',
+    'liquid/hypothesis/hypothesis.postgres',
+    'liquid/codimd/auth.django',
+    'liquid/codimd/codimd.session',
+    'liquid/codimd/codimd.postgres',
+    'liquid/ci/vmck.django',
+    'liquid/ci/drone.rpc.secret',
+]
 
 CORE_AUTH_APPS = [
     {
@@ -106,7 +131,7 @@ def random_secret(bits=256):
 
 
 def ensure_secret(path, get_value):
-    if not vault.read(path):
+    if not vault.read(path) or set(vault.read(path).keys()) != set(get_value()):
         log.info(f"Generating value for {path}")
         vault.set(path, get_value())
 
@@ -117,6 +142,9 @@ def ensure_secret_key(path):
 
 def wait_for_service_health_checks(health_checks):
     """Waits health checks to become green for green_count times in a row. """
+
+    if not health_checks:
+        return
 
     def pick_worst(a, b):
         if not a and not b:
@@ -226,6 +254,15 @@ def start_job(job, hcl):
     return job_checks
 
 
+def create_oauth2_app(app):
+    log.info('Auth %s -> %s', app['name'], app['callback'])
+    cmd = ['./manage.py', 'createoauth2app', app['name'], app['callback']]
+    output = retry()(docker.exec_)('liquid:core', *cmd)
+    tokens = json.loads(output)
+    vault.set(app['vault_path'], tokens)
+    return app['name']
+
+
 def populate_secrets(vault_secret_keys, core_auth_apps, liquid_job):
     """Sets a secrets for every path given and start liquid-core.
 
@@ -257,6 +294,9 @@ def populate_secrets(vault_secret_keys, core_auth_apps, liquid_job):
             'username': config.ci_docker_username,
             'password': config.ci_docker_password,
         })
+        ensure_secret('liquid/ci/drone.secret.2', lambda: {
+            'secret_key': random_secret(128),
+        })
 
     ensure_secret('liquid/rocketchat/adminuser', lambda: {
         'username': 'rocketchatadmin',
@@ -272,13 +312,11 @@ def populate_secrets(vault_secret_keys, core_auth_apps, liquid_job):
     liquid_checks = start_job('liquid', liquid_job)
     wait_for_service_health_checks({'core': liquid_checks['core']})
 
-    # Create the OAuth2 callbacks for apps
-    for app in core_auth_apps:
-        log.info('Auth %s -> %s', app['name'], app['callback'])
-        cmd = ['./manage.py', 'createoauth2app', app['name'], app['callback']]
-        output = retry()(docker.exec_)('liquid:core', *cmd)
-        tokens = json.loads(output)
-        vault.set(app['vault_path'], tokens)
+    # Create the OAuth2 callbacks for apps. This is really slow, so do them all in parallel...
+    with multiprocessing.Pool(len(core_auth_apps)) as p:
+        for app_name in p.imap_unordered(create_oauth2_app, core_auth_apps):
+            log.debug('auth done: ' + app_name)
+    log.info('secrets done.')
 
 
 @liquid_commands.command()
@@ -295,29 +333,7 @@ def deploy(secrets, checks):
     if secrets:
         vault.ensure_engine()
 
-    vault_secret_keys = [
-        'liquid/liquid/core.django',
-        'liquid/hoover/auth.django',
-        'liquid/hoover/search.django',
-        'liquid/hoover/search.postgres',
-        'liquid/hoover/snoop.django',
-        'liquid/hoover/snoop.postgres',
-        'liquid/authdemo/auth.django',
-        'liquid/nextcloud/nextcloud.admin',
-        'liquid/nextcloud/nextcloud.uploads',
-        'liquid/nextcloud/nextcloud.maria',
-        'liquid/dokuwiki/auth.django',
-        'liquid/nextcloud/auth.django',
-        'liquid/rocketchat/auth.django',
-        'liquid/hypothesis/auth.django',
-        'liquid/hypothesis/hypothesis.secret_key',
-        'liquid/hypothesis/hypothesis.postgres',
-        'liquid/codimd/auth.django',
-        'liquid/codimd/codimd.session',
-        'liquid/codimd/codimd.postgres',
-        'liquid/ci/vmck.django',
-        'liquid/ci/drone.secret',
-    ]
+    vault_secret_keys = list(VAULT_SECRET_KEYS)
     core_auth_apps = list(CORE_AUTH_APPS)
 
     for job in config.enabled_jobs:
@@ -338,13 +354,13 @@ def deploy(secrets, checks):
             nomad.stop(job)
         wait_for_stopped_jobs(jobs_to_stop)
 
-    # only start deps jobs + hoover
-    hov_deps = hoover.Deps()
-    deps_jobs = [(hov_deps.name, get_job(hov_deps.template))]
+    deps = []
+    if config.is_app_enabled('hoover'):
+        deps.append(hoover.Deps())
 
     health_checks = {}
-    for job, hcl in deps_jobs:
-        job_checks = start_job(job, hcl)
+    for job in deps:
+        job_checks = start_job(job.name, get_job(job.template))
         health_checks.update(job_checks)
 
     # wait until all deps are healthy
@@ -353,8 +369,9 @@ def deploy(secrets, checks):
 
     # run the set password script
     if secrets:
-        retry()(docker.exec_)('hoover-deps:search-pg', 'sh', '/local/set_pg_password.sh')
-        retry()(docker.exec_)('hoover-deps:snoop-pg', 'sh', '/local/set_pg_password.sh')
+        if config.is_app_enabled('hoover'):
+            retry()(docker.exec_)('hoover-deps:search-pg', 'sh', '/local/set_pg_password.sh')
+            retry()(docker.exec_)('hoover-deps:snoop-pg', 'sh', '/local/set_pg_password.sh')
 
     for job, hcl in jobs:
         job_checks = start_job(job, hcl)

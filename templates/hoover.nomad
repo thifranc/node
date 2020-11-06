@@ -63,6 +63,9 @@ job "hoover" {
           access_log  off;
           tcp_nopush   on;
           server_names_hash_bucket_size 128;
+          sendfile on;
+          sendfile_max_chunk 4m;
+          aio threads;
 
           upstream api {
             {{ range service "hoover-search" }}
