@@ -61,8 +61,8 @@ ${config.ci_docker_registry_env}
           DRONE_RPC_SECRET = "{{.Data.secret_key }}"
         {{- end }}
 
-        DRONE_SECRET_PLUGIN_ENDPOINT = "http://{{ env "attr.unique.network.ip-address" }}:9990/drone-secret"
-        DRONE_SECRET_ENDPOINT = "http://{{ env "attr.unique.network.ip-address" }}:9990/drone-secret"
+        DRONE_SECRET_PLUGIN_ENDPOINT = "http://{{ env "attr.unique.network.ip-address" }}:9997"
+        DRONE_SECRET_ENDPOINT = "http://{{ env "attr.unique.network.ip-address" }}:9997"
         {{- with secret "liquid/ci/drone.secret.2" }}
           DRONE_SECRET_PLUGIN_SECRET = {{.Data.secret_key | toJSON }}
           DRONE_SECRET_SECRET = {{.Data.secret_key | toJSON }}

@@ -4,6 +4,7 @@ cd /opt/node
 sudo chown -R vagrant: .
 mkdir volumes
 mkdir collections
+sudo pip3 install --system pipenv
 pipenv install
 
 echo "Waiting for Docker..."

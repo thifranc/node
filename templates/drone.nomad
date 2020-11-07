@@ -12,7 +12,7 @@ job "drone" {
       ${ task_logs() }
       driver = "docker"
       config {
-        image = "drone/vault"
+        image = "drone/vault:1.2"
         port_map {
           http = 3000
         }
@@ -23,6 +23,7 @@ job "drone" {
       }
 
       env {
+        DRONE_DEBUG = "true"
         VAULT_ADDR = "${config.vault_url}"
         VAULT_TOKEN = "${config.vault_token}"
         VAULT_SKIP_VERIFY = "true"
@@ -44,28 +45,24 @@ job "drone" {
         cpu = 150
         network {
           mbits = 1
-          port "http" {
-            #static = 9996
-          }
+          port "http" { }
         }
       }
 
       service {
         name = "drone-secret"
         port = "http"
-        tags = ["fabio-/drone-secret strip=/drone-secret"]
-        # pause tcp checks since maybe it's crashing the process
-        # check {
-        #   name = "tcp"
-        #   initial_status = "critical"
-        #   type = "tcp"
-        #   interval = "${check_interval}"
-        #   timeout = "${check_timeout}"
-        # }
+        tags = ["fabio-:9997 proto=tcp"]
+        check {
+          name = "tcp"
+          initial_status = "critical"
+          type = "tcp"
+          interval = "${check_interval}"
+          timeout = "${check_timeout}"
+        }
       }
     }
   }
-
 
   group "drone" {
     ${ group_disk() }
@@ -115,8 +112,8 @@ job "drone" {
           DRONE_USER_FILTER = {{.Data.user_filter | toJSON }}
         {{- end }}
 
-        DRONE_SECRET_PLUGIN_ENDPOINT = "http://{{ env "attr.unique.network.ip-address" }}:9990/drone-secret"
-        DRONE_SECRET_ENDPOINT = "http://{{ env "attr.unique.network.ip-address" }}:9990/drone-secret"
+        DRONE_SECRET_PLUGIN_ENDPOINT = "http://{{ env "attr.unique.network.ip-address" }}:9997"
+        DRONE_SECRET_ENDPOINT = "http://{{ env "attr.unique.network.ip-address" }}:9997"
         {{- with secret "liquid/ci/drone.secret.2" }}
           DRONE_SECRET_PLUGIN_SECRET = {{.Data.secret_key | toJSON }}
           DRONE_SECRET_SECRET = {{.Data.secret_key | toJSON }}
@@ -134,9 +131,7 @@ job "drone" {
         cpu = 150
         network {
           mbits = 1
-          port "http" {
-            static = 9997
-          }
+          port "http" {}
         }
       }
 

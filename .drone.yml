@@ -12,6 +12,9 @@ steps:
   commands:
   - flake8
 
+- name: leaks
+  image: zricethezav/gitleaks:v6.2.0
+
 - name: 1-hoover
   depends_on:
   - flake8

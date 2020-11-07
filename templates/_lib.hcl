@@ -146,7 +146,7 @@ ephemeral_disk {
         }
         check_restart {
           limit = 3
-          grace = "55s"
+          grace = "25s"
         }
       }
     }
@@ -227,8 +227,8 @@ ephemeral_disk {
           initial_status = "critical"
           type = "http"
           path = "/__auth/logout"
-          interval = "6s"
-          timeout = "3s"
+          interval = "${check_interval}"
+          timeout = "${check_timeout}"
         }
         check_restart {
           limit = 3
