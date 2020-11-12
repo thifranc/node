@@ -1,10 +1,8 @@
 kind: pipeline
 name: test
 
-# magic undocumented feature!
-# https://discourse.drone.io/t/how-to-limit-build-concurrency-per-project/3500
 concurrency:
-  limit: 4
+  limit: 3
 
 steps:
 - name: flake8

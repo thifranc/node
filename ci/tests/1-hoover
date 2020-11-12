@@ -12,7 +12,7 @@ cp ci/conf/1-with-collections.ini liquid.ini
 ./liquid deploy
 
 echo "Process all, Do a backup"
-until ./liquid dockerexec hoover:snoop ./manage.py workisdone testdata 2>/dev/null; do sleep 5; done
+until ./liquid dockerexec hoover:snoop ./manage.py workisdone testdata; do sleep 15; done
 ./liquid backup ./backup
 ls -aRlh ./backup
 
