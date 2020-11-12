@@ -1,4 +1,4 @@
-{% from '_lib.hcl' import shutdown_delay, authproxy_group, group_disk, task_logs with context -%}
+{% from '_lib.hcl' import authproxy_group with context -%}
 
 job "nextcloud-proxy" {
   datacenters = ["dc1"]

@@ -1,4 +1,4 @@
-{% from '_lib.hcl' import shutdown_delay, authproxy_group, task_logs, group_disk with context -%}
+{% from '_lib.hcl' import shutdown_delay, task_logs, group_disk with context -%}
 
 job "codimd" {
   datacenters = ["dc1"]
