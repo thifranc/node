@@ -32,7 +32,7 @@ function vagrant_up() {
   if [ 0 -eq $sshret ]; then
     return 0
   else
-    vagrant destroy -f
+    vagrant destroy -f || ( sleep 3 && vagrant destroy -f ) || true
     return 1
   fi
 }
@@ -43,6 +43,7 @@ function retry_vagrant_up() {
     if vagrant_up; then
       return 0
     fi
+    sleep 15
   done
   echo "Vagrant failed after $RETRIES tries"
   exit 1

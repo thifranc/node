@@ -2,7 +2,7 @@ kind: pipeline
 name: test
 
 concurrency:
-  limit: 3
+  limit: 2
 
 steps:
 - name: flake8
@@ -12,6 +12,8 @@ steps:
 
 - name: leaks
   image: zricethezav/gitleaks:v6.2.0
+  depends_on:
+  - flake8
 
 - name: 1-hoover
   depends_on:
