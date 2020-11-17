@@ -17,11 +17,6 @@ import multiprocessing
 
 log = logging.getLogger(__name__)
 
-SNOOP_PG_ALLOC = "hoover-deps:snoop-pg"
-SNOOP_ES_ALLOC = "hoover-deps:es"
-HYPOTHESIS_ES_ALLOC = "hypothesis:es"
-SNOOP_API_ALLOC = "hoover:snoop"
-
 VAULT_SECRET_KEYS = [
     'liquid/liquid/core.django',
     'liquid/hoover/auth.django',

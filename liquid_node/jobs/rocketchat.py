@@ -11,7 +11,7 @@ class Rocketchat(jobs.Job):
 class Deps(jobs.Job):
     name = 'rocketchat-deps'
     template = jobs.TEMPLATES / f'{name}.nomad'
-    app = 'rocketchat-deps'
+    app = 'rocketchat'
     stage = 1
 
 

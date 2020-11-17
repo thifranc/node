@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 SNOOP_PG_ALLOC = "hoover-deps:snoop-pg"
 SNOOP_ES_ALLOC = "hoover-deps:es"
-HYPOTHESIS_ES_ALLOC = "hypothesis:es"
+HYPOTHESIS_ES_ALLOC = "hypothesis-deps:es"
 SNOOP_API_ALLOC = "hoover:snoop"
 
 
@@ -46,7 +46,7 @@ def backup(blobs, es, pg, backup_collections, collections, apps, dest):
             backup_pg(dest / 'hoover-snoop.pg.sql.gz', 'snoop', 'snoop', 'hoover-deps:snoop-pg')
 
         if config.is_app_enabled('codimd'):
-            backup_pg(dest / 'codimd.pg.sql.gz', 'codimd', 'codimd', 'codimd:postgres')
+            backup_pg(dest / 'codimd.pg.sql.gz', 'codimd', 'codimd', 'codimd-deps:postgres')
 
         if config.is_app_enabled('dokuwiki'):
             backup_files(dest / 'dokuwiki.tgz', '/bitnami/dokuwiki', [], 'dokuwiki:php')
@@ -54,7 +54,7 @@ def backup(blobs, es, pg, backup_collections, collections, apps, dest):
         if config.is_app_enabled('hypothesis'):
             backup_dir = dest / "hypothesis"
             backup_dir.mkdir(parents=True, exist_ok=True)
-            backup_pg(backup_dir / 'hypothesis.pg.sql.gz', 'hypothesis', 'hypothesis', 'hypothesis:pg')
+            backup_pg(backup_dir / 'hypothesis.pg.sql.gz', 'hypothesis', 'hypothesis', 'hypothesis-deps:pg')
             backup_es(dest / 'hypothesis', 'hypothesis', '/_h_es', HYPOTHESIS_ES_ALLOC)
 
     if not backup_collections or not config.is_app_enabled('hoover'):
@@ -141,18 +141,19 @@ def restore_apps(ctx, src):
         nomad.restart('hoover', 'snoop')
 
     if config.is_app_enabled('codimd'):
-        restore_pg(src / 'codimd.pg.sql.gz', 'codimd', 'codimd', 'codimd:postgres')
+        restore_pg(src / 'codimd.pg.sql.gz', 'codimd', 'codimd', 'codimd-deps:postgres')
         nomad.restart('codimd', 'codimd')
+        nomad.restart('codimd-deps', 'postgres')
 
     if config.is_app_enabled('dokuwiki'):
         restore_files(src / 'dokuwiki.tgz', '/bitnami/dokuwiki', 'dokuwiki:php')
         nomad.restart('dokuwiki', 'php')
 
     if config.is_app_enabled('hypothesis'):
-        restore_pg(src / 'hypothesis/hypothesis.pg.sql.gz', 'hypothesis', 'hypothesis', 'hypothesis:pg')
+        restore_pg(src / 'hypothesis/hypothesis.pg.sql.gz', 'hypothesis', 'hypothesis', 'hypothesis-deps:pg')
         restore_es(src / 'hypothesis/', 'hypothesis', '/_h_es', HYPOTHESIS_ES_ALLOC)
-        nomad.restart('hypothesis', 'pg')
-        nomad.restart('hypothesis', 'es')
+        nomad.restart('hypothesis-deps', 'pg')
+        nomad.restart('hypothesis-deps', 'es')
 
     log.info("Restore done; deploying")
     ctx.invoke(halt)
