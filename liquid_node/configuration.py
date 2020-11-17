@@ -208,6 +208,7 @@ class Configuration:
                 self.ci_docker_registry_env = ''
             self.enabled_jobs.append(ci.Drone())
             self.enabled_jobs.append(ci.DroneWorkers())
+            self.enabled_jobs.append(ci.Deps())
 
         self.snoop_collections = []
 

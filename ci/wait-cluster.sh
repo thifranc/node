@@ -11,7 +11,7 @@ echo "Waiting for Docker..."
 until docker version; do sleep 2; done
 
 echo "Waiting for cluster autovault..."
-sleep 10
-docker ps
-docker exec cluster ./cluster.py wait || docker exec cluster ./cluster.py wait
+until `docker ps | grep -q cluster`; do sleep 2; done
+sleep 2
+docker exec cluster ./cluster.py wait
 echo "Cluster provision done."
