@@ -318,8 +318,9 @@ def populate_secrets_post(core_auth_apps):
     Returns:
         None
     """
-    # Create the OAuth2 callbacks for apps. This is really slow, so do them all in parallel...
-    with multiprocessing.Pool(len(core_auth_apps)) as p:
+    # Create the OAuth2 callbacks for apps. This is really slow, so do them all
+    # in parallel...
+    with multiprocessing.Pool(3) as p:
         for app_name in p.imap_unordered(create_oauth2_app, core_auth_apps):
             log.debug('auth done: ' + app_name)
     log.info('secrets done.')
