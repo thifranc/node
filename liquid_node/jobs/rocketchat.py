@@ -5,7 +5,7 @@ class Rocketchat(jobs.Job):
     name = 'rocketchat'
     template = jobs.TEMPLATES / f'{name}.nomad'
     app = 'rocketchat'
-    stage = 2
+    stage = 3
 
 
 class Deps(jobs.Job):
@@ -19,7 +19,7 @@ class Migrate(jobs.Job):
     name = 'rocketchat-migrate'
     template = jobs.TEMPLATES / f'{name}.nomad'
     app = 'rocketchat'
-    stage = 3
+    stage = 2
 
 
 class Proxy(jobs.Job):

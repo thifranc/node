@@ -317,7 +317,7 @@ class Configuration:
 
     def is_app_enabled(self, app_name):
         if app_name == 'hoover-workers':
-            return self.snoop_workers_enabled
+            return self.snoop_workers_enabled and self.is_app_enabled('hoover')
         return app_name in Configuration.CORE_APPS or \
             self.ini.getboolean('apps', app_name, fallback=strtobool(self.default_app_status))
 
