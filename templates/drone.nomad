@@ -137,9 +137,10 @@ job "drone" {
           SSH_USERNAME = "vagrant"
           VMCK_URL = 'http://{{ env "NOMAD_ADDR_http" }}'
           BACKEND = "qemu"
-          QEMU_CPU_MHZ = 2000
-          VM_PORT_RANGE_START = 10010
-          VM_PORT_RANGE_STOP = 50000
+          QEMU_CPU_MHZ = = "{% raw %}${attr.cpu.frequency}{% endraw %}"
+          # nomad reserves 20000-32000
+          VM_PORT_RANGE_START = 32010
+          VM_PORT_RANGE_STOP = 40000
           EOF
           destination = "local/vmck.env"
           env = true
