@@ -98,8 +98,8 @@ job "hoover-nginx" {
               return 200 "healthy\n";
             }
 
-            location  ~ ^/(api|admin|accounts|static) {
-              rewrite ^/(api|admin|accounts|static)(.*) /hoover-search/$1$2 break;
+            location  ~ ^/(api|admin|accounts|static|swagger|redoc) {
+              rewrite ^/(api|admin|accounts|static|swagger|redoc)(.*) /hoover-search/$1$2 break;
               proxy_pass http://fabio;
             }
 
