@@ -381,6 +381,8 @@ def deploy(secrets, checks):
                 if config.is_app_enabled('hoover'):
                     retry()(docker.exec_)('hoover-deps:search-pg', 'sh', '/local/set_pg_password.sh')
                     retry()(docker.exec_)('hoover-deps:snoop-pg', 'sh', '/local/set_pg_password.sh')
+                if config.is_app_enabled('codimd'):
+                    retry()(docker.exec_)('codimd-deps:postgres', 'sh', '/local/set_pg_password.sh')
 
     log.info("Deploy done!")
 

@@ -1,4 +1,4 @@
-{% from '_lib.hcl' import shutdown_delay, authproxy_group, task_logs, group_disk with context -%}
+{% from '_lib.hcl' import set_pg_password_template, shutdown_delay, authproxy_group, task_logs, group_disk with context -%}
 
 job "codimd-deps" {
   datacenters = ["dc1"]
@@ -48,6 +48,8 @@ job "codimd-deps" {
         destination = "local/pg.env"
         env = true
       }
+      ${ set_pg_password_template('codimd') }
+
       resources {
         cpu = 100
         memory = 300
