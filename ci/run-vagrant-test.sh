@@ -56,7 +56,7 @@ print_section "Run Script"
 set +e
 set -x
 vagrant provision
-ret=$?
+ret1=$?
 set +x
 
 print_section "Stats"
@@ -67,7 +67,8 @@ for cmd in "uname -a" "w" "free -h" "df -h"; do
   $cmd 2>&1
 done
 EOF
+ret2=$?
 
 print_section "Destroying Vagrant"
 vagrant destroy -f || echo "vagrant destroy failed, but we don't care"
-exit $ret
+exit $(( $ret1 || $ret2 ))
