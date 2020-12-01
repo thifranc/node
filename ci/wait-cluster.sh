@@ -14,7 +14,5 @@ until docker version --format 'docker s={{.Server.Version}} c={{.Client.Version}
 echo "Waiting for cluster autovault..."
 until docker ps | grep -q cluster; do sleep 2; done
 sleep 2
-docker ps
-docker logs cluster
-docker exec cluster ./cluster.py wait
+docker exec cluster ./cluster.py wait &> /dev/null
 echo "Cluster provision done."
