@@ -2,7 +2,6 @@
 
 cd "$( dirname "${BASH_SOURCE[0]}" )"
 
-set -x
 export VAGRANT_DOTFILE_PATH=$(mktemp -d --tmpdir VAGRANT_DOTFILE_XXXXXXXX)
 export VAGRANT_DEFAULT_PROVIDER=vmck
 export VAGRANT_CHECKPOINT_DISABLE=true
@@ -13,7 +12,7 @@ echo $VMCK_URL
 export VMCK_NAME="$DRONE_REPO_NAME:$DRONE_BRANCH#$DRONE_BUILD_NUMBER-$FILENAME"
 export MACHINE_NAME="$(echo $FILENAME | head -c4)$(hostname | head -c2)"
 
-TIMEOUT_MIN=30
+TIMEOUT_MIN=49
 RETRIES=3
 set +x
 
