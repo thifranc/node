@@ -14,12 +14,12 @@ class Hoover(jobs.Job):
         },
     ]
     vault_secret_keys = [
-        'liquid/hoover/auth.django',
         'liquid/hoover/search.django',
         'liquid/hoover/search.postgres',
         'liquid/hoover/snoop.django',
         'liquid/hoover/snoop.postgres',
     ]
+    generate_oauth2_proxy_cookie = True
 
 
 class Workers(jobs.Job):

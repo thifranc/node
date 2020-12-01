@@ -17,8 +17,8 @@ class Nextcloud(jobs.Job):
         'liquid/nextcloud/nextcloud.admin',
         'liquid/nextcloud/nextcloud.uploads',
         'liquid/nextcloud/nextcloud.maria',
-        'liquid/nextcloud/auth.django',
     ]
+    generate_oauth2_proxy_cookie = True
 
 
 class Migrate(jobs.Job):

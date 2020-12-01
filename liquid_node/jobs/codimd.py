@@ -19,10 +19,10 @@ class Codimd(jobs.Job):
         },
     ]
     vault_secret_keys = [
-        'liquid/codimd/auth.django',
         'liquid/codimd/codimd.session',
         'liquid/codimd/codimd.postgres',
     ]
+    generate_oauth2_proxy_cookie = True
 
 
 class Deps(jobs.Job):

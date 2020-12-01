@@ -3,7 +3,7 @@ from .configuration import config
 from .consul import consul
 from .jobs import get_job
 from .process import run, run_fg
-from .util import first, retry
+from .util import first, retry, random_secret
 from .docker import docker
 from .vault import vault
 from time import time, sleep
@@ -12,16 +12,9 @@ import click
 import os
 import logging
 import json
-import base64
 import multiprocessing
 
 log = logging.getLogger(__name__)
-
-VAULT_SECRET_KEYS = [
-]
-
-CORE_AUTH_APPS = [
-]
 
 
 @click.group()
@@ -50,21 +43,6 @@ def resources():
     print('Resource requirement totals: ')
     for key, value in sorted(total.items()):
         print(f'  {key}: {value}')
-
-
-def random_secret(bits=256):
-    """ Generate a crypto-quality 256-bit random string. """
-    return str(base64.b16encode(os.urandom(int(bits / 8))), 'latin1').lower()
-
-
-def ensure_secret(path, get_value):
-    if not vault.read(path) or set(vault.read(path).keys()) != set(get_value()):
-        log.info(f"Generating value for {path}")
-        vault.set(path, get_value())
-
-
-def ensure_secret_key(path):
-    ensure_secret(path, lambda: {'secret_key': random_secret()})
 
 
 def wait_for_service_health_checks(health_checks):
@@ -193,7 +171,7 @@ def create_oauth2_app(app):
     return app['name']
 
 
-def populate_secrets_pre(vault_secret_keys):
+def populate_secrets_pre(vault_secret_keys, core_auth_cookies, extra_fns):
     """Sets a secrets for every path given and start liquid-core.
 
     The function sets a secret for every path given (the secrets stored in vault_secret_keys are 256 bits
@@ -201,35 +179,22 @@ def populate_secrets_pre(vault_secret_keys):
 
     Args:
         vault_secrets_keys: A list of paths for which a secret is needed.
+        core_auth_cookies: A list of names for special auth proxy cookie secrets
+        extra_fns: A list of callables that will generate extra secrets
 
     Returns:
         None
     """
 
     for path in vault_secret_keys:
-        ensure_secret_key(path)
+        vault.ensure_secret_key(path)
 
-    if config.ci_enabled:
-        vault.set('liquid/ci/drone.github', {
-            'client_id': config.ci_github_client_id,
-            'client_secret': config.ci_github_client_secret,
-            'user_filter': config.ci_github_user_filter,
-        })
-        vault.set('liquid/ci/drone.docker', {
-            'username': config.ci_docker_username,
-            'password': config.ci_docker_password,
-        })
-        ensure_secret('liquid/ci/drone.secret.2', lambda: {
-            'secret_key': random_secret(128),
-        })
+    for fn in extra_fns:
+        if fn:
+            fn(vault, config, random_secret)
 
-    ensure_secret('liquid/rocketchat/adminuser', lambda: {
-        'username': 'rocketchatadmin',
-        'pass': random_secret(64),
-    })
-
-    for name in config.ALL_APPS:
-        ensure_secret(f'liquid/{name}/cookie', lambda: {
+    for name in core_auth_cookies:
+        vault.ensure_secret(f'liquid/{name}/cookie', lambda: {
             'cookie': random_secret(64),
         })
 
@@ -270,15 +235,21 @@ def deploy(secrets, checks):
 
     vault_secret_keys = list()
     core_auth_apps = list()
+    core_auth_cookies = list()
+    extra_secret_fns = list()
 
     for job in config.enabled_jobs:
         vault_secret_keys += list(job.vault_secret_keys)
         core_auth_apps += list(job.core_oauth_apps)
+        if job.generate_oauth2_proxy_cookie:
+            core_auth_cookies.append(job.name)
+        if job.extra_secret_fn:
+            extra_secret_fns.append(job.extra_secret_fn)
 
     jobs = [(job.name, (job.stage, get_job(job.template))) for job in config.enabled_jobs]
 
     if secrets:
-        populate_secrets_pre(vault_secret_keys)
+        populate_secrets_pre(vault_secret_keys, core_auth_cookies, extra_secret_fns)
 
     # check if there are jobs to stop
     nomad_jobs = set(job['ID'] for job in nomad.jobs())

@@ -20,6 +20,7 @@ class Hypothesis(jobs.Job):
         'liquid/hypothesis/hypothesis.secret_key',
         'liquid/hypothesis/hypothesis.postgres',
     ]
+    generate_oauth2_proxy_cookie = True
 
 
 class Deps(jobs.Job):

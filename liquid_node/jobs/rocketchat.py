@@ -19,8 +19,14 @@ class Rocketchat(jobs.Job):
         },
     ]
     vault_secret_keys = [
-        'liquid/rocketchat/auth.django',
     ]
+    generate_oauth2_proxy_cookie = True
+
+    def extra_secret_fn(self, vault, config, random_secret):
+        vault.ensure_secret('liquid/rocketchat/adminuser', lambda: {
+            'username': 'rocketchatadmin',
+            'pass': random_secret(64),
+        })
 
 
 class Deps(jobs.Job):

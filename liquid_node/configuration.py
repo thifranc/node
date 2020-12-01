@@ -6,7 +6,7 @@ from distutils.util import strtobool
 from pathlib import Path
 
 from .util import import_string
-from liquid_node.jobs import ci, Job, liquid, hoover, dokuwiki, rocketchat, \
+from liquid_node.jobs import Job, liquid, hoover, dokuwiki, rocketchat, \
     nextcloud, hypothesis, codimd
 
 
@@ -206,9 +206,6 @@ class Configuration:
                 )
             else:
                 self.ci_docker_registry_env = ''
-            self.enabled_jobs.append(ci.Drone())
-            self.enabled_jobs.append(ci.DroneWorkers())
-            self.enabled_jobs.append(ci.Deps())
 
         self.snoop_collections = []
 
@@ -318,6 +315,8 @@ class Configuration:
     def is_app_enabled(self, app_name):
         if app_name == 'hoover-workers':
             return self.snoop_workers_enabled and self.is_app_enabled('hoover')
+        if app_name == 'ci':
+            return self.ci_enabled
         return app_name in Configuration.CORE_APPS or \
             self.ini.getboolean('apps', app_name, fallback=strtobool(self.default_app_status))
 

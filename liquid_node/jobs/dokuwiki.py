@@ -14,8 +14,8 @@ class Dokuwiki(jobs.Job):
         },
     ]
     vault_secret_keys = [
-        'liquid/dokuwiki/auth.django',
     ]
+    generate_oauth2_proxy_cookie = True
 
 
 class Proxy(jobs.Job):

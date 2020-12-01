@@ -10,6 +10,7 @@ class Liquid(jobs.Job):
         'liquid/liquid/core.django',
     ]
 
+
 class Ingress(jobs.Job):
     name = 'ingress'
     template = jobs.TEMPLATES / f'{name}.nomad'
