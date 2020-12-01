@@ -6,6 +6,21 @@ class Rocketchat(jobs.Job):
     template = jobs.TEMPLATES / f'{name}.nomad'
     app = 'rocketchat'
     stage = 3
+    core_oauth_apps = [
+        {
+            'name': 'rocketchat-authproxy',
+            'vault_path': 'liquid/rocketchat/auth.oauth2',
+            'callback': '/oauth2/callback',
+        },
+        {
+            'name': 'rocketchat-app',
+            'vault_path': 'liquid/rocketchat/app.oauth2',
+            'callback': '/_oauth/liquid',
+        },
+    ]
+    vault_secret_keys = [
+        'liquid/rocketchat/auth.django',
+    ]
 
 
 class Deps(jobs.Job):

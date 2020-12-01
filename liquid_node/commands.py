@@ -18,78 +18,9 @@ import multiprocessing
 log = logging.getLogger(__name__)
 
 VAULT_SECRET_KEYS = [
-    'liquid/liquid/core.django',
-    'liquid/hoover/auth.django',
-    'liquid/hoover/search.django',
-    'liquid/hoover/search.postgres',
-    'liquid/hoover/snoop.django',
-    'liquid/hoover/snoop.postgres',
-    'liquid/authdemo/auth.django',
-    'liquid/nextcloud/nextcloud.admin',
-    'liquid/nextcloud/nextcloud.uploads',
-    'liquid/nextcloud/nextcloud.maria',
-    'liquid/dokuwiki/auth.django',
-    'liquid/nextcloud/auth.django',
-    'liquid/rocketchat/auth.django',
-    'liquid/hypothesis/auth.django',
-    'liquid/hypothesis/hypothesis.secret_key',
-    'liquid/hypothesis/hypothesis.postgres',
-    'liquid/codimd/auth.django',
-    'liquid/codimd/codimd.session',
-    'liquid/codimd/codimd.postgres',
-    'liquid/ci/vmck.django',
-    'liquid/ci/vmck.postgres',
-    'liquid/ci/drone.rpc.secret',
 ]
 
 CORE_AUTH_APPS = [
-    {
-        'name': 'authdemo',
-        'vault_path': 'liquid/authdemo/auth.oauth2',
-        'callback': f'{config.app_url("authdemo")}/oauth2/callback',
-    },
-    {
-        'name': 'hoover',
-        'vault_path': 'liquid/hoover/auth.oauth2',
-        'callback': f'{config.app_url("hoover")}/oauth2/callback',
-    },
-    {
-        'name': 'dokuwiki',
-        'vault_path': 'liquid/dokuwiki/auth.oauth2',
-        'callback': f'{config.app_url("dokuwiki")}/oauth2/callback',
-    },
-    {
-        'name': 'rocketchat-authproxy',
-        'vault_path': 'liquid/rocketchat/auth.oauth2',
-        'callback': f'{config.app_url("rocketchat")}/oauth2/callback',
-    },
-    {
-        'name': 'rocketchat-app',
-        'vault_path': 'liquid/rocketchat/app.oauth2',
-        'callback': f'{config.app_url("rocketchat")}/_oauth/liquid',
-    },
-    {
-        'name': 'nextcloud',
-        'vault_path': 'liquid/nextcloud/auth.oauth2',
-        'callback': f'{config.app_url("nextcloud")}/oauth2/callback',
-    },
-    {
-        'name': 'codimd-app',
-        'vault_path': 'liquid/codimd/app.auth.oauth2',
-        'callback': f'{config.app_url("codimd")}/auth/oauth2/callback',
-    },
-    {
-        'name': 'codimd-authproxy',
-        'vault_path': 'liquid/codimd/auth.oauth2',
-        'callback': f'{config.app_url("codimd")}/oauth2/callback',
-    },
-    {
-        'name': 'hypothesis',
-        'vault_path': 'liquid/hypothesis/auth.oauth2',
-        # the old auth proxy is still running for this service. new one:
-        # 'callback': f'{config.app_url("hypothesis")}/oauth2/callback',
-        'callback': f'{config.app_url("hypothesis")}/__auth/callback',
-    },
 ]
 
 
@@ -254,7 +185,8 @@ def start_job(job, hcl):
 
 def create_oauth2_app(app):
     log.info('Auth %s -> %s', app['name'], app['callback'])
-    cmd = ['./manage.py', 'createoauth2app', app['name'], app['callback']]
+    cb = config.app_url(app['name']) + app['callback']
+    cmd = ['./manage.py', 'createoauth2app', app['name'], cb]
     output = retry()(docker.exec_)('liquid:core', *cmd)
     tokens = json.loads(output)
     vault.set(app['vault_path'], tokens)
@@ -336,12 +268,12 @@ def deploy(secrets, checks):
     if secrets:
         vault.ensure_engine()
 
-    vault_secret_keys = list(VAULT_SECRET_KEYS)
-    core_auth_apps = list(CORE_AUTH_APPS)
+    vault_secret_keys = list()
+    core_auth_apps = list()
 
     for job in config.enabled_jobs:
         vault_secret_keys += list(job.vault_secret_keys)
-        core_auth_apps += list(job.core_auth_apps)
+        core_auth_apps += list(job.core_oauth_apps)
 
     jobs = [(job.name, (job.stage, get_job(job.template))) for job in config.enabled_jobs]
 
