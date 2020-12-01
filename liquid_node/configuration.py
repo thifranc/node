@@ -7,7 +7,7 @@ from pathlib import Path
 
 from .util import import_string
 from liquid_node.jobs import Job, liquid, hoover, dokuwiki, rocketchat, \
-    nextcloud, hypothesis, codimd
+    nextcloud, hypothesis, codimd, ci
 
 
 def split_lang_codes(option):
@@ -64,6 +64,9 @@ class Configuration:
         codimd.Codimd(),
         codimd.Deps(),
         codimd.Proxy(),
+        ci.Drone(),
+        ci.Deps(),
+        ci.DroneWorkers(),
     ]
 
     def __init__(self):
@@ -184,11 +187,6 @@ class Configuration:
         self.wait_interval = self.ini.getfloat('deploy', 'wait_interval', fallback=1)
         self.wait_green_count = self.ini.getint('deploy', 'wait_green_count', fallback=8)
 
-        self.default_app_status = self.ini.get('apps', 'default_app_status', fallback='on')
-        self.all_jobs = list(self.ALL_JOBS)
-        self.enabled_jobs = [job for job in self.all_jobs if self.is_app_enabled(job.app)]
-        self.disabled_jobs = [job for job in self.all_jobs if not self.is_app_enabled(job.app)]
-
         self.ci_enabled = 'ci' in self.ini
         if self.ci_enabled:
             self.ci_runner_capacity = self.ini.getint('ci', 'runner_capacity', fallback=4)
@@ -206,6 +204,11 @@ class Configuration:
                 )
             else:
                 self.ci_docker_registry_env = ''
+
+        self.default_app_status = self.ini.get('apps', 'default_app_status', fallback='on')
+        self.all_jobs = list(self.ALL_JOBS)
+        self.enabled_jobs = [job for job in self.all_jobs if self.is_app_enabled(job.app)]
+        self.disabled_jobs = [job for job in self.all_jobs if not self.is_app_enabled(job.app)]
 
         self.snoop_collections = []
 
