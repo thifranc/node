@@ -98,8 +98,8 @@ job "hoover-nginx" {
               return 200 "healthy\n";
             }
 
-            location  ~ ^/(api|admin|accounts|static|swagger|redoc) {
-              rewrite ^/(api|admin|accounts|static|swagger|redoc)(.*) /hoover-search/$1$2 break;
+            location  ~ ^/(api/v0|admin|accounts|static|swagger|redoc) {
+              rewrite ^/(api/v0|admin|accounts|static|swagger|redoc)(.*) /hoover-search/$1$2 break;
               proxy_pass http://fabio;
             }
 
@@ -178,7 +178,7 @@ job "hoover-nginx" {
         cp -v /local/.env.local .
 
         {% if config.liquid_debug %}
-          exec npm run prod # dev
+          exec npm run prod #dev
         {% else %}
           exec npm run prod
         {% endif %}
