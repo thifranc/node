@@ -14,9 +14,9 @@ class Nextcloud(jobs.Job):
         },
     ]
     vault_secret_keys = [
-        'liquid/nextcloud/nextcloud.admin',
-        'liquid/nextcloud/nextcloud.uploads',
-        'liquid/nextcloud/nextcloud.maria',
+        'liquid/nextcloud/nextcloud.minio.key',
+        'liquid/nextcloud/nextcloud.minio.secret',
+        'liquid/nextcloud/nextcloud.postgres',
     ]
     generate_oauth2_proxy_cookie = True
 

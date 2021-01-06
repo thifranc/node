@@ -5,12 +5,8 @@ job "nextcloud-deps" {
   type = "service"
   priority = 65
 
-  group "maria" {
-    ${ group_disk() }
-    ${ continuous_reschedule() }
-    task "maria" {
-      ${ task_logs() }
-
+  group "nextcloud-pg" {
+    task "nextcloud-pg" {
       constraint {
         attribute = "{% raw %}${meta.liquid_volumes}{% endraw %}"
         operator = "is_set"
@@ -24,43 +20,113 @@ job "nextcloud-deps" {
       driver = "docker"
       ${ shutdown_delay() }
       config {
-        image = "mariadb:10.4"
+        image = "postgres:13"
         volumes = [
-          "{% raw %}${meta.liquid_volumes}{% endraw %}/nextcloud/mysql:/var/lib/mysql",
+          "{% raw %}${meta.liquid_volumes}{% endraw %}/nextcloud/postgres13:/var/lib/postgresql/data",
         ]
         labels {
-          liquid_task = "nextcloud-maria"
+          liquid_task = "nextcloud-pg"
         }
         port_map {
-          maria = 3306
+          pg = 5432
         }
-        memory_hard_limit = 750
+        # 128MB, the default postgresql shared_memory config
+        shm_size = 134217728
       }
+
       template {
         data = <<-EOF
-        MYSQL_RANDOM_ROOT_PASSWORD = "yes"
-        MYSQL_DATABASE = "nextcloud"
-        MYSQL_USER = "nextcloud"
-        {{- with secret "liquid/nextcloud/nextcloud.maria" }}
-          MYSQL_PASSWORD = {{.Data.secret_key | toJSON }}
+        POSTGRES_DB = "nextcloud"
+        POSTGRES_USER = "nextcloud"
+
+        {{- with secret "liquid/nextcloud/nextcloud.postgres" }}
+          POSTGRES_PASSWORD = {{.Data.secret_key | toJSON }}
         {{- end }}
         EOF
-        destination = "local/maria.env"
+        destination = "local/db.env"
         env = true
       }
+
       resources {
         cpu = 100
-        memory = 250
+        memory = 500
         network {
           mbits = 1
-          port "maria" {
-            static = 8767
-          }
+          port pg {}
         }
       }
+
       service {
-        name = "nextcloud-maria"
-        port = "maria"
+        name = "nextcloud-pg"
+        port = "pg"
+        tags = ["fabio-:9991"]
+
+        check {
+          name = "tcp"
+          initial_status = "critical"
+          type = "tcp"
+          interval = "${check_interval}"
+          timeout = "${check_timeout}"
+        }
+      }
+    }
+  }
+
+  group "nextcloud-minio" {
+    task "nextcloud-minio" {
+      constraint {
+        attribute = "{% raw %}${meta.liquid_volumes}{% endraw %}"
+        operator = "is_set"
+      }
+      affinity {
+        attribute = "{% raw %}${meta.liquid_large_databases}{% endraw %}"
+        value     = "true"
+        weight    = 100
+      }
+
+      driver = "docker"
+      ${ shutdown_delay() }
+      config {
+        image = "${config.image('minio')}"
+        args = ["server", "/data"]
+        volumes = [
+          "{% raw %}${meta.liquid_volumes}{% endraw %}/nextcloud/data-minio:/data",
+        ]
+        labels {
+          liquid_task = "nextcloud-minio"
+        }
+        port_map {
+          minio = 9000
+        }
+      }
+
+      template {
+        data = <<-EOF
+        {{- with secret "liquid/nextcloud/nextcloud.minio.key" }}
+          OBJECTSTORE_S3_KEY = {{.Data.secret_key | toJSON }}
+        {{- end }}
+        {{- with secret "liquid/nextcloud/nextcloud.minio.secret" }}
+          OBJECTSTORE_S3_SECRET = {{.Data.secret_key | toJSON }}
+        {{- end }}
+        EOF
+        destination = "local/minio.env"
+        env = true
+      }
+
+      resources {
+        cpu = 100
+        memory = 200
+        network {
+          mbits = 1
+          port minio {}
+        }
+      }
+
+      service {
+        name = "nextcloud-minio"
+        port = "minio"
+        tags = ["fabio-:9992"]
+
         check {
           name = "tcp"
           initial_status = "critical"

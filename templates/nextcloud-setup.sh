@@ -22,50 +22,48 @@ php occ status --output=json
 # $INSTALLED as "error". Using `pipefail` we can capure  errors of `php status`
 # too as the "error" value in $INSTALLED.
 
-set +e
-INSTALLED=$( set -o pipefail; php occ status --output=json | tail -n 1 | jq '.installed' || echo "error" )
-set -e
+#set +e
+#INSTALLED=$( set -o pipefail; php occ status --output=json | tail -n 1 | jq '.installed' || echo "error" )
+#set -e
 
-if [[ "$INSTALLED" =~ "true" || "$INSTALLED" =~ "error" ]]; then
-    echo "Trying to upgrade nextcloud"
-    php occ upgrade --no-interaction || true
-    php occ app:update --no-interaction --all || true
-fi
+#if [[ "$INSTALLED" =~ "true" || "$INSTALLED" =~ "error" ]]; then
+#    echo "Trying to upgrade nextcloud"
+#    php occ upgrade --no-interaction || true
+#    php occ app:update --no-interaction --all || true
+#fi
 
+#set +e
+#INSTALLED=$( set -o pipefail; php occ status --output=json | tail -n 1 | jq '.installed' || echo "error" )
+#set -e
 
-set +e
-INSTALLED=$( set -o pipefail; php occ status --output=json | tail -n 1 | jq '.installed' || echo "error" )
-set -e
-
-
-if [[ "$INSTALLED" =~ "false" || "$INSTALLED" =~ "error" ]]; then
-    echo "Installing nextcloud"
-
-    sudo chown -R www-data:www-data /data
-    php occ maintenance:install \
-            --no-interaction \
-            --verbose \
-            --database pgsql \
-            --database-name $POSTGRES_DB \
-            --database-host $POSTGRES_HOST \
-            --database-user $POSTGRES_USER \
-            --database-pass $POSTGRES_PASSWORD \
-            --admin-user=$NEXTCLOUD_ADMIN_USER \
-            --admin-pass=$NEXTCLOUD_ADMIN_PASSWORD \
-            --data-dir=$NEXTCLOUD_DATA_DIR
-
-    echo "Installation successful"
-fi
+#if [[ "$INSTALLED" =~ "false" || "$INSTALLED" =~ "error" ]]; then
+#    echo "Installing nextcloud"
+#
+#    sudo chown -R www-data:www-data /data
+#    php occ maintenance:install \
+#            --no-interaction \
+#            --verbose \
+#            --database pgsql \
+#            --database-name $POSTGRES_DB \
+#            --database-host $POSTGRES_HOST \
+#            --database-user $POSTGRES_USER \
+#            --database-pass $POSTGRES_PASSWORD \
+#            --admin-user=$NEXTCLOUD_ADMIN_USER \
+#            --admin-pass=$NEXTCLOUD_ADMIN_PASSWORD \
+#            --data-dir=$NEXTCLOUD_DATA_DIR
+#
+#    echo "Installation successful"
+#fi
 
 echo "Configuring..."
 php occ maintenance:mode --off || true
 
 php occ config:system:set trusted_domains 0 --value '*'
-php occ config:system:set dbhost --value $POSTGRES_HOST
+#php occ config:system:set dbhost --value $POSTGRES_HOST
 php occ config:system:set overwrite.cli.url --value $HTTP_PROTO://$NEXTCLOUD_HOST
 php occ config:system:set allow_user_to_change_display_name --value false --type boolean
-php occ config:system:set overwritehost --value $NEXTCLOUD_HOST
-php occ config:system:set overwriteprotocol --value $HTTP_PROTO
+#php occ config:system:set overwritehost --value $NEXTCLOUD_HOST
+#php occ config:system:set overwriteprotocol --value $HTTP_PROTO
 php occ config:system:set htaccess.RewriteBase --value '/'
 php occ config:system:set skeletondirectory --value ''
 php occ config:system:set updatechecker --value false --type boolean
@@ -117,10 +115,12 @@ php occ app:enable sociallogin
 php occ app:enable groupfolders
 php occ app:enable group_everyone
 
+# kill internet and app store
 php occ config:system:set has_internet_connection --value false --type boolean
 php occ config:system:set appstoreenabled --value false --type boolean
 
-php occ config:system:set social_login_auto_redirect --value false --type boolean
+php occ config:system:set social_login_auto_redirect --value true --type boolean
+php occ config:system:set social_login_http_client.timeout --value 45 --type int
 
 echo "Configuration done"
 php occ maintenance:mode --off || true

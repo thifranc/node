@@ -54,7 +54,6 @@ class Configuration:
         rocketchat.Proxy(),
         nextcloud.Nextcloud(),
         nextcloud.Deps(),
-        nextcloud.Migrate(),
         nextcloud.Periodic(),
         nextcloud.Proxy(),
         hypothesis.Hypothesis(),
@@ -80,23 +79,10 @@ class Configuration:
         self.ini.read(self.root / 'liquid.ini')
 
         self.default_app_status = self.ini.get('apps', 'default_app_status', fallback='on')
+        self.snoop_workers_enabled = self.ini.getboolean('snoop', 'enable_workers', fallback=True)
+        self.ci_enabled = 'ci' in self.ini
 
-        self.all_jobs = [
-            nextcloud.Database(),
-            liquid.Liquid(),
-            liquid.Ingress(),
-            hoover.Hoover(),
-            hoover.Deps(),
-            hoover.Workers(),
-            dokuwiki.Dokuwiki(),
-            rocketchat.Rocketchat(),
-            rocketchat.Migrate(),
-            nextcloud.Nextcloud(),
-            nextcloud.Periodic(),
-            hypothesis.Hypothesis(),
-            hypothesis.UserSync(),
-            codimd.Codimd(),
-        ]
+        self.all_jobs = list(self.ALL_JOBS)
         self.enabled_jobs = [job for job in self.all_jobs if self.is_app_enabled(job.app)]
         self.disabled_jobs = [job for job in self.all_jobs if not self.is_app_enabled(job.app)]
 
@@ -192,7 +178,6 @@ class Configuration:
 
         self.hoover_ui_override_server = self.ini.get('liquid', 'hoover_ui_override_server', fallback='')
         self.hoover_es_max_concurrent_shard_requests = self.ini.getint('liquid', 'hoover_es_max_concurrent_shard_requests', fallback='')
-        self.snoop_workers_enabled = self.ini.getboolean('snoop', 'enable_workers', fallback=True)
         self.snoop_min_workers_per_node = self.ini.getint('snoop', 'min_workers_per_node', fallback=2)
         self.snoop_max_workers_per_node = self.ini.getint('snoop', 'max_workers_per_node', fallback=4)
         self.snoop_cpu_count_multiplier = self.ini.getfloat('snoop', 'worker_cpu_count_multiplier', fallback=0.85)  # noqa: E501
@@ -210,7 +195,6 @@ class Configuration:
         self.wait_interval = self.ini.getfloat('deploy', 'wait_interval', fallback=3)
         self.wait_green_count = self.ini.getint('deploy', 'wait_green_count', fallback=5)
 
-        self.ci_enabled = 'ci' in self.ini
         if self.ci_enabled:
             self.ci_runner_capacity = self.ini.getint('ci', 'runner_capacity', fallback=4)
             self.ci_docker_username = self.ini.get('ci', 'docker_username')
@@ -229,9 +213,6 @@ class Configuration:
                 self.ci_docker_registry_env = ''
 
         self.default_app_status = self.ini.get('apps', 'default_app_status', fallback='on')
-        self.all_jobs = list(self.ALL_JOBS)
-        self.enabled_jobs = [job for job in self.all_jobs if self.is_app_enabled(job.app)]
-        self.disabled_jobs = [job for job in self.all_jobs if not self.is_app_enabled(job.app)]
 
         self.snoop_collections = []
 
@@ -348,11 +329,12 @@ class Configuration:
     @classmethod
     def _validate_collection_name(self, name):
         if not name.islower():
-            raise ValueError(f'''Invalid collection name "{name}"!
+            raise ValueError(
+                f'''Invalid collection name "{name}"!
 
 Collection names must start with lower case letters and must contain only
-lower case letters and digits.
-''')
+lower case letters and digits. '''
+            )
 
 
 config = Configuration()
