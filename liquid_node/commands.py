@@ -355,3 +355,47 @@ def getsecret(path=None):
         for section in vault.list():
             for key in vault.list(section):
                 print(f'{section}{key}')
+
+
+@liquid_commands.command()
+@click.argument('app', type=click.Choice(['nextcloud', 'rocketchat'], case_sensitive=False), required=True)
+def setup_app(app):
+    def print_steps(steps):
+        for i, step in enumerate(steps):
+            print(f'Step {i}.')
+            print(step)
+            print()
+
+    print_steps({
+        'nextcloud': [
+            'Visit home page, click on nextcloud',
+            f'Authenticate with user "admin" and password "{vault.read("liquid/nextcloud/nextcloud.admin")["secret_key"]}"',
+            f'''Go to Settings > Administration > Social Login:
+            {config.app_url("nextcloud")}/settings/admin/sociallogin
+            and open a Custom OAuth2 config''',
+            f'''Set the following options:
+            - Update profile on every login
+            - Disable notify admins about every login
+            Leave everything else unchecked as default.
+
+Fill in the Custom OAuth2 form:
+
+            Internal name:  liquid
+            Title:          {config.liquid_title}
+            API Base URL:   http://127.0.0.1:12345
+            Authorize URL:  /o/authorize/
+            Token URL:      /o/token/
+            Profile URL:    /accounts/profile
+            Logout URL:     {config.app_url('core')}/accounts/logout/
+            Client Id:      {vault.read("liquid/nextcloud/app.oauth2")['client_id']}
+            Client Secret:  {vault.read("liquid/nextcloud/app.oauth2")['client_secret']}
+
+            Leave everything else empty.
+            ''',
+            "Log out from the admin user, log back in with the OAuth2 button. If it works, you're done.",
+        ],
+        'rocketchat': [
+            '''visit the home page and look at docs:
+            https://github.com/liquidinvestigations/node/blob/master/docs/RocketChat.md#set-up-authentication'''
+        ]
+    }[app])

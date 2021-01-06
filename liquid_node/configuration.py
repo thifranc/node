@@ -79,6 +79,27 @@ class Configuration:
         self.ini = configparser.ConfigParser()
         self.ini.read(self.root / 'liquid.ini')
 
+        self.default_app_status = self.ini.get('apps', 'default_app_status', fallback='on')
+
+        self.all_jobs = [
+            nextcloud.Database(),
+            liquid.Liquid(),
+            liquid.Ingress(),
+            hoover.Hoover(),
+            hoover.Deps(),
+            hoover.Workers(),
+            dokuwiki.Dokuwiki(),
+            rocketchat.Rocketchat(),
+            rocketchat.Migrate(),
+            nextcloud.Nextcloud(),
+            nextcloud.Periodic(),
+            hypothesis.Hypothesis(),
+            hypothesis.UserSync(),
+            codimd.Codimd(),
+        ]
+        self.enabled_jobs = [job for job in self.all_jobs if self.is_app_enabled(job.app)]
+        self.disabled_jobs = [job for job in self.all_jobs if not self.is_app_enabled(job.app)]
+
         self.cluster_root_path = self.ini.get('cluster', 'cluster_path', fallback=None)
         self.consul_url = self.ini.get('cluster', 'consul_url', fallback='http://127.0.0.1:8500')
 
@@ -312,6 +333,8 @@ class Configuration:
         raise RuntimeError("A job needs `template` or `loader`")
 
     def app_url(self, name):
+        if name == 'core':
+            return f'{self.liquid_http_protocol}://{self.liquid_domain}'
         return f'{self.liquid_http_protocol}://{name}.{self.liquid_domain}'
 
     def is_app_enabled(self, app_name):

@@ -2,6 +2,8 @@ from time import time, sleep
 import logging
 import urllib.error
 
+import urllib.error
+
 from .configuration import config
 from .jsonapi import JsonApi
 from .util import first, retry
