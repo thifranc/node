@@ -23,13 +23,17 @@ job "nextcloud" {
 
       driver = "docker"
       config {
-        privileged = true  # for internal bind mount
-        force_pull = true
+        #force_pull = true
         image = "${config.image('liquid-nextcloud')}"
         volumes = [
-          "{% raw %}${meta.liquid_volumes}{% endraw %}/nextcloud/nextcloud19:/var/www/html",
+          "{% raw %}${meta.liquid_volumes}{% endraw %}/nextcloud/nextcloud-2021-vol:/var/www/html",
+          #"{% raw %}${meta.liquid_volumes}{% endraw %}/nextcloud/nextcloud-2020/custom_apps:/var/www/html/custom_apps",
+          #"{% raw %}${meta.liquid_volumes}{% endraw %}/nextcloud/nextcloud-2020/config:/var/www/html/config",
+          #"{% raw %}${meta.liquid_volumes}{% endraw %}/nextcloud/nextcloud-2020/data:/var/www/html/data",
+          #"{% raw %}${meta.liquid_volumes}{% endraw %}/nextcloud/nextcloud-2020/themes:/var/www/html/themes",
         ]
-        args = ["/bin/bash", "/local/cmd.sh"]
+        entrypoint = []
+        args = ["/bin/bash", "/local/setup.sh"]
         port_map {
           http = 80
         }
@@ -51,6 +55,7 @@ job "nextcloud" {
       env {
         NEXTCLOUD_URL = "${config.liquid_http_protocol}://nextcloud.${config.liquid_domain}"
         NEXTCLOUD_HOST = "nextcloud.${config.liquid_domain}"
+        NEXTCLOUD_TRUSTED_DOMAINS = "nextcloud.${config.liquid_domain}"
 
         LIQUID_TITLE = "${config.liquid_title}"
         LIQUID_CORE_URL = "${config.liquid_core_url}"
@@ -62,21 +67,33 @@ job "nextcloud" {
         HTTP_PROTO = "${config.liquid_http_protocol}"
 
         POSTGRES_DB = "nextcloud"
+        PGDATABASE = "nextcloud"
         POSTGRES_USER = "nextcloud"
+        PGUSER = "nextcloud"
 
         OBJECTSTORE_S3_BUCKET = "nextcloud"
         OBJECTSTORE_S3_PORT = "9992"
         OBJECTSTORE_S3_SSL = "false"
         #OBJECTSTORE_S3_REGION = ""
         OBJECTSTORE_S3_USEPATH_STYLE = "true"
+
+        APACHE_DISABLE_REWRITE_IP = "true"
       }
 
       template {
         data = <<-EOF
 
+        NEXTCLOUD_ADMIN_USER = initial_liquid_admin
+        {{- with secret "liquid/nextcloud/nextcloud.admin.password" }}
+          NEXTCLOUD_ADMIN_PASSWORD = {{.Data.secret_key | toJSON }}
+        {{- end }}
+
         POSTGRES_HOST = "{{ env "attr.unique.network.ip-address" }}:9991"
+        PGHOSTADDR = "{{ env "attr.unique.network.ip-address" }}"
+        PGPORT = "9991"
         {{- with secret "liquid/nextcloud/nextcloud.postgres" }}
           POSTGRES_PASSWORD = {{.Data.secret_key | toJSON }}
+          PGPASSWORD = {{.Data.secret_key | toJSON }}
         {{- end }}
 
         OBJECTSTORE_S3_HOST = "{{ env "attr.unique.network.ip-address" }}"
@@ -99,14 +116,6 @@ job "nextcloud" {
 {% include 'nextcloud-setup.sh' %}
         EOF
         destination = "local/setup.sh"
-        perms = "755"
-      }
-
-      template {
-        data = <<EOF
-{% include 'nextcloud-cmd.sh' %}
-        EOF
-        destination = "local/cmd.sh"
         perms = "755"
       }
 

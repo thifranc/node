@@ -59,7 +59,7 @@ job "nextcloud-deps" {
       service {
         name = "nextcloud-pg"
         port = "pg"
-        tags = ["fabio-:9991"]
+        tags = ["fabio-:9991 proto=tcp"]
 
         check {
           name = "tcp"
@@ -98,15 +98,18 @@ job "nextcloud-deps" {
         port_map {
           minio = 9000
         }
+        memory_hard_limit = 2000
       }
 
       template {
         data = <<-EOF
         {{- with secret "liquid/nextcloud/nextcloud.minio.key" }}
-          OBJECTSTORE_S3_KEY = {{.Data.secret_key | toJSON }}
+          MINIO_ROOT_USER = {{.Data.secret_key | toJSON }}
+          MINIO_ACCESS_KEY = {{.Data.secret_key | toJSON }}
         {{- end }}
         {{- with secret "liquid/nextcloud/nextcloud.minio.secret" }}
-          OBJECTSTORE_S3_SECRET = {{.Data.secret_key | toJSON }}
+          MINIO_ROOT_PASSWORD = {{.Data.secret_key | toJSON }}
+          MINIO_SECRET_KEY = {{.Data.secret_key | toJSON }}
         {{- end }}
         EOF
         destination = "local/minio.env"
@@ -115,7 +118,7 @@ job "nextcloud-deps" {
 
       resources {
         cpu = 100
-        memory = 200
+        memory = 300
         network {
           mbits = 1
           port minio {}
@@ -125,7 +128,7 @@ job "nextcloud-deps" {
       service {
         name = "nextcloud-minio"
         port = "minio"
-        tags = ["fabio-:9992"]
+        tags = ["fabio-:9992 proto=tcp"]
 
         check {
           name = "tcp"

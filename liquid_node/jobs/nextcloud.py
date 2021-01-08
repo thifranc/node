@@ -17,6 +17,8 @@ class Nextcloud(jobs.Job):
         'liquid/nextcloud/nextcloud.minio.key',
         'liquid/nextcloud/nextcloud.minio.secret',
         'liquid/nextcloud/nextcloud.postgres',
+        'liquid/nextcloud/nextcloud.admin.user',
+        'liquid/nextcloud/nextcloud.admin.password',
     ]
     generate_oauth2_proxy_cookie = True
 
@@ -25,7 +27,7 @@ class Periodic(jobs.Job):
     name = 'nextcloud-periodic'
     template = jobs.TEMPLATES / f'{name}.nomad'
     app = 'nextcloud'
-    stage = 3
+    stage = 4
 
 
 class Proxy(jobs.Job):
@@ -40,3 +42,9 @@ class Deps(jobs.Job):
     template = jobs.TEMPLATES / f'{name}.nomad'
     app = 'nextcloud'
     stage = 1
+
+#class Migrate(jobs.Job):
+#    name = 'nextcloud-migrate'
+#    template = jobs.TEMPLATES / f'{name}.nomad'
+#    app = 'nextcloud'
+#    stage = 3
