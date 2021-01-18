@@ -1,29 +1,13 @@
-import subprocess
-import json
 from pathlib import Path
 from .process import run, run_fg
-from .util import retry
 
 
 class Docker:
 
-    def image_size(self, name):
-        cmd = "docker image ls " + name + " --format '{{.Size}}'"
-        return run(cmd, shell=True, stderr=subprocess.DEVNULL, echo=False).strip()
-
-    def image_digest(self, name):
-        cmd = "docker image inspect " + name + " -f '{{json .RepoDigests}}'"
-        try:
-            out = run(cmd, shell=True, stderr=subprocess.DEVNULL, echo=False)
-        except subprocess.CalledProcessError:
-            return None
-        return json.loads(out)[0]
-
-    @retry()
-    def pull(self, name):
-        cmd = "docker pull -q " + name
-        run(cmd, shell=True, echo=False)
-        return self.image_digest(name)
+    def containers(self, labels=[]):
+        label_args = ' '.join(f'-f label={k}={v}' for k, v in labels)
+        out = run(f'docker ps -q {label_args}')
+        return out.split()
 
     def exec_command(self, name, *args, tty=False):
         """Prepare and return the command to run in a user shell.
