@@ -59,6 +59,22 @@ job "liquid" {
 
       template {
         data = <<-EOF
+          #!/bin/bash
+          set -ex
+          date
+          if [[ "$DEBUG" == "true" ]]; then
+            exec ./manage.py runserver 0.0.0.0:8000
+          else
+            exec /runserver
+          fi
+          EOF
+        env = false
+        destination = "local/startup.sh"
+      }
+ 
+
+      template {
+        data = <<-EOF
           #!/usr/bin/env python3
           import sys, os
           os.environ['DJANGO_SETTINGS_MODULE'] = 'liquidcore.site.settings'
