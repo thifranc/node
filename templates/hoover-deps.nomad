@@ -405,6 +405,59 @@ job "hoover-deps" {
   }
   {% endif %}
 
+  {% if config.snoop_image_classification_enabled %}
+  group "image-classification" {
+    count = ${config.snoop_image_classification_count}
+
+    ${ continuous_reschedule() }
+    ${ group_disk() }
+
+    task "image-classification" {
+      ${ task_logs() }
+
+      driver = "docker"
+      config {
+        image = "${config.image('image-classification')}"
+        port_map {
+          image_classification = 5001
+        }
+        labels {
+          liquid_task = "hoover-image-classification"
+        }
+        memory_hard_limit = ${4 * config.snoop_image_classification_memory_limit}
+      }
+
+      resources {
+        memory = ${config.snoop_image_classification_memory_limit}
+        cpu = 100
+        network {
+          mbits = 1
+          port "image_classification" {}
+        }
+      }
+
+      env {
+        OBJECT_DETECTION_ENABLED = "${config.image_classification_object_detection_enabled}
+        OBJECT_DETECTION_MODEL = "${config.image_classification_object_detection_model}
+      }
+
+      service {
+        name = "hoover-image_classification"
+        port = "image_classification"
+        tags = ["fabio-/_pdf-preview strip=/_image-classification"]
+        check {
+          name = "http"
+          initial_status = "critical"
+          type = "http"
+          path = "/health"
+          interval = "${check_interval}"
+          timeout = "${check_timeout}"
+        }
+      }
+    }
+  }
+  {% endif %}
+
   group "rabbitmq" {
     ${ continuous_reschedule() }
     ${ group_disk() }
