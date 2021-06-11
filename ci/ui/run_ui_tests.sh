@@ -1,5 +1,6 @@
 #!/bin/bash -ex
 
+export PATH=/snap/bin:$PATH
 curl --version
 wget --version
 npm --version
