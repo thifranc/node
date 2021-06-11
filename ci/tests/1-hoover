@@ -12,6 +12,9 @@ cp ci/conf/1-with-collections.ini liquid.ini
 
 echo "Run UI Integration tests"
 
+until ./liquid dockerexec hoover:snoop ./manage.py workisdone testdata; do sleep 30; done
+sleep 60
+
 ./ci/ui/create_users.sh
 export LIQUID_URL="http://liquid.example.org"
 export HOOVER_URL="http://hoover.liquid.example.org"
@@ -24,8 +27,6 @@ export HOOVER_ADMIN_PASSWORD="adminpassword"
 (cd ./ci/ui/ && ./run_ui_tests.sh)
 
 echo "Process some, Do a backup"
-#until ./liquid dockerexec hoover:snoop ./manage.py workisdone testdata; do sleep 15; done
-sleep 60
 cp ci/conf/1-with-collections-stopped.ini liquid.ini
 ./liquid deploy
 ./liquid backup $BACKUP/backup
