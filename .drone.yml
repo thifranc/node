@@ -1,6 +1,9 @@
 kind: pipeline
 name: static-tests
 
+concurrency:
+  limit: 1
+
 steps:
 - name: flake8
   image: alpine/flake8:3.7.9
@@ -10,11 +13,13 @@ steps:
 # fails on local development
 #- name: leaks
 #  image: zricethezav/gitleaks:v6.2.0
-#
 
 ---
 kind: pipeline
 name: integration-tests
+
+concurrency:
+  limit: 1
 
 depends_on:
 - static-tests
