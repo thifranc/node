@@ -6,4 +6,9 @@ wget --version
 npm --version
 node --version
 
-curl -v $LIQUID_URL
+rm -rf liquid-tests || true
+git clone https://github.com/liquidinvestigations/liquid-tests
+cd liquid-tests
+git status
+npm i
+npm t
