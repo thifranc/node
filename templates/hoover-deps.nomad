@@ -38,6 +38,7 @@
         xpack.monitoring.collection.index.stats.timeout = "30s"
         xpack.monitoring.collection.index.recovery.timeout = "30s"
         xpack.monitoring.history.duration = "32d"
+        discovery.type = "single-node"
 
         path.repo = "/es_repo"
 
@@ -170,7 +171,7 @@ job "hoover-deps" {
       }
       template {
         data = <<-EOF
-          discovery.zen.ping.unicast.hosts = {{- range service "hoover-es-master-transport" -}}"{{.Address}}:{{.Port}}"{{- end -}}
+          discovery.seed_hosts = {{- range service "hoover-es-master-transport" -}}"{{.Address}}:{{.Port}}"{{- end -}}
           EOF
         destination = "local/es-master.env"
         env = true
