@@ -2,7 +2,7 @@
 
 {%- macro elasticsearch_docker_config(data_dir_name) %}
       config {
-        image = "docker.elastic.co/elasticsearch/elasticsearch:6.8.15"
+        image = "docker.elastic.co/elasticsearch/elasticsearch:7.13.2"
         args = ["/bin/sh", "-c", "chown 1000:1000 /usr/share/elasticsearch/data /es_repo && echo chown done && exec /usr/local/bin/docker-entrypoint.sh"]
         volumes = [
           "{% raw %}${meta.liquid_volumes}{% endraw %}/hoover/es/${data_dir_name}:/usr/share/elasticsearch/data",
@@ -442,6 +442,7 @@ job "hoover-deps" {
         IMAGE_CLASSIFICATION_ENABLED = "${config.snoop_image_classification_classify_images_enabled}"
         IMAGE_CLASSIFICATION_MODEL = "${config.snoop_image_classification_classify_images_model}"
         WAITRESS_THREADS = ${config.snoop_image_classification_waitress_threads}
+        VECTOR_GENERATION_ENABLED = ${config.snoop_image_classification_vector_enabled}"
       }
 
       service {

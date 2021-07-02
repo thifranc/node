@@ -225,6 +225,9 @@ class Configuration:
         self.snoop_image_classification_classify_images_model = \
             self.ini.get('snoop', 'image_classification_classify_images_model', fallback='mobilenet')
 
+        self.snoop_image_classification_vector_enabled = \
+            self.ini.getboolean('snoop', 'image_classification_vector_enabled', fallback=False)
+
         self.check_interval = self.ini.get('deploy', 'check_interval', fallback='24s')
         self.check_timeout = self.ini.get('deploy', 'check_timeout', fallback='20s')
         self.wait_max = self.ini.getfloat('deploy', 'wait_max_sec', fallback=300)

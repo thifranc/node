@@ -88,6 +88,9 @@ job "hoover-workers" {
           {% if config.snoop_image_classification_object_detection_enabled %}
              SNOOP_OBJECT_DETECTION_URL = "http://{% raw %}${attr.unique.network.ip-address}{% endraw %}:9990/_image-classification/detect-objects"
           {% endif %}
+          {% if config.snoop_image_classification_vector_enabled %}
+             SNOOP_IMAGE_VECTOR_GENERATOR_URL = "http://{% raw %}${attr.unique.network.ip-address}{% endraw %}:9990/_image-classification/get-vector"
+          {% endif %}
         {% endif %}
 
         SNOOP_MIN_WORKERS = "${config.snoop_min_workers_per_node}"

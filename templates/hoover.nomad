@@ -199,6 +199,9 @@ job "hoover" {
            {% if config.snoop_image_classification_classify_images_enabled %}
               SNOOP_IMAGE_CLASSIFICATION_URL = "http://{% raw %}${attr.unique.network.ip-address}{% endraw %}:9990/_image-classification/classify-image"
            {% endif %}
+           {% if config.snoop_image_classification_vector_enabled %}
+              SNOOP_IMAGE_VECTOR_GENERATOR_URL = "http://{% raw %}${attr.unique.network.ip-address}{% endraw %}:9990/_image-classification/get-vector"
+           {% endif %}
         {% endif %}
         SNOOP_COLLECTIONS = ${ config.snoop_collections | tojson | tojson }
       }
@@ -314,6 +317,9 @@ job "hoover" {
            {% endif %}
            {% if config.snoop_image_classification_classify_images_enabled %}
               SNOOP_IMAGE_CLASSIFICATION_URL = "http://{% raw %}${attr.unique.network.ip-address}{% endraw %}:9990/_image-classification/classify-image"
+           {% endif %}
+           {% if config.snoop_image_classification_vector_enabled %}
+              SNOOP_IMAGE_VECTOR_GENERATOR_URL = "http://{% raw %}${attr.unique.network.ip-address}{% endraw %}:9990/_image-classification/get-vector"
            {% endif %}
         {% endif %}
         SNOOP_COLLECTIONS = ${ config.snoop_collections | tojson | tojson }
@@ -432,6 +438,9 @@ job "hoover" {
            {% endif %}
            {% if config.snoop_image_classification_classify_images_enabled %}
               SNOOP_IMAGE_CLASSIFICATION_URL = "http://{% raw %}${attr.unique.network.ip-address}{% endraw %}:9990/_image-classification/classify-image"
+           {% endif %}
+           {% if config.snoop_image_classification_vector_enabled %}
+              SNOOP_IMAGE_VECTOR_GENERATOR_URL = "http://{% raw %}${attr.unique.network.ip-address}{% endraw %}:9990/_image-classification/get-vector"
            {% endif %}
         {% endif %}
         SNOOP_COLLECTIONS = ${ config.snoop_collections | tojson | tojson }
