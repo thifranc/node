@@ -12,9 +12,11 @@ cp ci/conf/1-with-collections.ini liquid.ini
 
 echo "Run UI Integration tests"
 
+echo "Waiting for data to be processed..."
 until ./liquid dockerexec hoover:snoop ./manage.py workisdone testdata; do sleep 30; done
-sleep 60
+echo "All data processed."
 
+echo "Running UI tests..."
 ./ci/ui/create_users.sh
 export LIQUID_URL="http://liquid.example.org"
 export HOOVER_URL="http://hoover.liquid.example.org"

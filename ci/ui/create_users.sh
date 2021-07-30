@@ -9,3 +9,9 @@ print(admin)
 john = User.objects.create_user('john', 'john@thebeatles.com', 'johnpassword')
 print(john)
 EOF
+
+
+./liquid dockerexec hoover:search ./manage.py shell <<EOF
+from hoover.search.models import Collection
+Collection.objects.update(public=True)
+EOF
