@@ -13,7 +13,7 @@ from pathlib import Path
 from .util import import_string
 # from .docker import docker
 from liquid_node.jobs import Job, liquid, hoover, dokuwiki, rocketchat, \
-    nextcloud, codimd, ci, wikijs, matrix
+    nextcloud, codimd, ci, wikijs, matrix, bbb
 
 
 log = logging.getLogger(__name__)
@@ -53,7 +53,7 @@ class CheckedConfigParser(configparser.ConfigParser):
 
 class Configuration:
     ALL_APPS = ('hoover', 'dokuwiki', 'wikijs', 'rocketchat', 'nextcloud',
-                'codimd', 'matrix',)
+                'codimd', 'matrix', 'bbb',)
     # The core apps can't be turned off.
     CORE_APPS = ('liquid', 'ingress',)
 
@@ -72,6 +72,7 @@ class Configuration:
         'nextcloud': 'has a file share system and a contact list of users.',
         'rocketchat': 'is the old chat app; will remove shortly.',
         'matrix': 'is the new chat app',
+        'bbb': 'is the your visio app',
     }
 
     APP_REDIS_IDS = {
@@ -83,6 +84,7 @@ class Configuration:
 
     APP_ALLOW_ALL_USERS = {
         'matrix': True,
+        'bbb': True,
     }
 
     ALL_JOBS = [
@@ -120,6 +122,7 @@ class Configuration:
         matrix.Matrix(),
         matrix.Deps(),
         matrix.Migrate(),
+        bbb.Deps(),
     ]
 
     def __init__(self):
@@ -420,6 +423,25 @@ class Configuration:
             'drone_secret': self.ini.getint('ports', 'drone-secret', fallback=9972),
             'drone_server_http': self.ini.getint('ports', 'drone-server-http', fallback=9971),
 
+            'bbb_pg': self.ini.getint('ports', 'bbb_pg', fallback=9966),
+            'bbb_mongo': self.ini.getint('ports', 'bbb_mongo', fallback=9960),
+            'bbb_kurento': self.ini.getint('ports', 'bbb_kurento', fallback=9797),
+            'bbb_kurento_min': self.ini.getint('ports', 'bbb_kurento_min', fallback=16600),
+            'bbb_kurento_max': self.ini.getint('ports', 'bbb_kurento_max', fallback=16700),
+            'bbb_web': self.ini.getint('ports', 'bbb_web', fallback=9961),
+            'bbb_apps_akka': self.ini.getint('ports', 'bbb_apps_akka', fallback=8091),
+            'bbb_redis': self.ini.getint('ports', 'bbb_redis', fallback=9962),
+            'bbb_html5_front': self.ini.getint('ports', 'bbb_html5_front', fallback=9968),
+            'bbb_html5_back': self.ini.getint('ports', 'bbb_html5_back', fallback=9967),
+            'bbb_sfu': self.ini.getint('ports', 'bbb_sfu', fallback=3333),
+            'bbb_fsesl': self.ini.getint('ports', 'bbb_fsesl', fallback=8021),
+            'bbb_ws': self.ini.getint('ports', 'bbb_ws', fallback=5066),
+            'bbb_wss': self.ini.getint('ports', 'bbb_wss', fallback=7443),
+            'bbb_sip': self.ini.getint('ports', 'bbb_sip', fallback=5060),
+            'bbb_sipint': self.ini.getint('ports', 'bbb_sipint', fallback=5090),
+            'bbb_nginx': self.ini.getint('ports', 'bbb_nginx', fallback=9959),
+            'bbb_gl': self.ini.getint('ports', 'bbb_gl', fallback=9958),
+
             'matrix_pg': self.ini.getint('ports', 'matrix_pg', fallback=9950),
             'matrix_synapse': self.ini.getint('ports', 'matrix_synapse', fallback=9951),
             'matrix_element': self.ini.getint('ports', 'matrix_element', fallback=9952),
@@ -448,6 +470,25 @@ class Configuration:
         self.port_hoover_es_master_transport = self.PORT_MAP['hoover_es_master_transport']
         self.port_wikijs_pg = self.PORT_MAP['wikijs_pg']
         self.port_wikijs = self.PORT_MAP['wikijs']
+
+        self.port_bbb_pg = self.PORT_MAP['bbb_pg']
+        self.port_bbb_mongo = self.PORT_MAP['bbb_mongo']
+        self.port_bbb_kurento = self.PORT_MAP['bbb_kurento']
+        self.port_bbb_kurento_min = self.PORT_MAP['bbb_kurento_min']
+        self.port_bbb_kurento_max = self.PORT_MAP['bbb_kurento_max']
+        self.port_bbb_web = self.PORT_MAP['bbb_web']
+        self.port_bbb_apps_akka = self.PORT_MAP['bbb_apps_akka']
+        self.port_bbb_redis = self.PORT_MAP['bbb_redis']
+        self.port_bbb_html5_front = self.PORT_MAP['bbb_html5_front']
+        self.port_bbb_html5_back = self.PORT_MAP['bbb_html5_back']
+        self.port_bbb_sfu = self.PORT_MAP['bbb_sfu']
+        self.port_bbb_fsesl = self.PORT_MAP['bbb_fsesl']
+        self.port_bbb_wss = self.PORT_MAP['bbb_ws']
+        self.port_bbb_wss = self.PORT_MAP['bbb_wss']
+        self.port_bbb_sip = self.PORT_MAP['bbb_sip']
+        self.port_bbb_sip = self.PORT_MAP['bbb_sipint']
+        self.port_bbb_nginx = self.PORT_MAP['bbb_nginx']
+        self.port_bbb_gl = self.PORT_MAP['bbb_gl']
 
         self.port_matrix_pg = self.PORT_MAP['matrix_pg']
         self.port_matrix_synapse = self.PORT_MAP['matrix_synapse']
